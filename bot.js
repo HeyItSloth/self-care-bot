@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { Client, Intents, Collection } = require('discord.js');
 const { token } = require('./config.json');
-const { Sequelize } = require('sequelize');
+const { Sequelize, DataTypes } = require('sequelize');
 const chalk = require('chalk');
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
@@ -28,15 +28,28 @@ for (const file of buttonFiles) {
 const sequelize = new Sequelize('database', 'user', 'password', {
     host:       'localhost',
     dialect:    'sqlite',
-    logging:    'false',
+    logging:    false,
     storage:    'database.sqlite'
 });
+
+const Reminders = sequelize.define('reminders', {
+    name: {
+        type: Sequelize.STRING,
+        unique: true
+    },
+    reminders: {
+        type: DataTypes.JSON,
+        allowNull: true
+    }
+})
 
 client.once('ready', () => {
     client.user.setActivity({
         name: "my friends be healthy | ❤️",
         type: "WATCHING"
     });
+
+    Reminders.sync({ force: false });
 
     const d = new Date();
     let init = Date.now();
@@ -56,6 +69,11 @@ client.on('interactionCreate', async interaction => {
         console.error(error);
         await interaction.reply(`Something went wrong!`);
     };
+});
+
+client.on('interactionCreate', interaction => {
+	if (!interaction.isSelectMenu()) return;
+	console.log(interaction);
 });
 
 client.login(token);
